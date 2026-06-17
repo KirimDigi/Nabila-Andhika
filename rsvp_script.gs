@@ -1,8 +1,8 @@
 // --- GOOGLE APPS SCRIPT FOR RSVP & GUEST WISHES ---
-// Spreadsheet ID: 1lOPD-GKP2cZPI84fgBWMZdkZ4abX706i8mvU66y6Qto
+// Spreadsheet ID: 1qUDD6d6l-FaU_6JewIFVa-3E6OanFxYVD_E9HM_fqpI
 // Sheet Name: Sheet1
 
-const SPREADSHEET_ID = "1lOPD-GKP2cZPI84fgBWMZdkZ4abX706i8mvU66y6Qto";
+const SPREADSHEET_ID = "1qUDD6d6l-FaU_6JewIFVa-3E6OanFxYVD_E9HM_fqpI";
 const SHEET_NAME = "Sheet1";
 
 function doGet(e) {
