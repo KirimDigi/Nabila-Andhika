@@ -3026,6 +3026,37 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
+  
+    <style id="perf-optimizations">
+      /* GPU layer for fixed music button - no freeze on scroll */
+      #wds-audio-container {
+        will-change: transform;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+      }
+      /* Smooth momentum scroll on iOS/mobile */
+      body {
+        -webkit-overflow-scrolling: touch;
+      }
+      /* Disable heavy contain that causes repaints mid-scroll */
+      /* Use paint containment only on gallery images */
+      .swiper-slide img,
+      .elementor-image-carousel img,
+      .jet-gallery-item img {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+      }
+      /* Prevent screenshot freeze: isolate fixed-position overlays */
+      #cover {
+        isolation: isolate;
+      }
+      /* Avoid scroll jank from animated elements outside viewport */
+      .elementor-invisible {
+        content-visibility: auto;
+      }
+    </style>
   </head>
   <body
     class="wp-singular post-template-default single single-post postid-22578 single-format-standard wp-custom-logo wp-embed-responsive wp-theme-weddingsaas-wp wp-child-theme-weddingsaas-wp-child elementor-default elementor-template-canvas elementor-kit-7 elementor-page elementor-page-22578 elementor-page-22504 elementor-page-611727 elementor-page-611726 elementor-page-611725 elementor-page-611723 elementor-page-611722"
@@ -3082,7 +3113,7 @@
                 data-element_type="section"
                 data-e-type="section"
                 id="cover"
-                data-settings='{"jet_parallax_layout_list":[],"background_background":"slideshow","background_slideshow_gallery":[{"id":26988,"url":"cover2.jpeg"}],"background_slideshow_loop":"yes","background_slideshow_slide_duration":5000,"background_slideshow_slide_transition":"fade","background_slideshow_transition_duration":500}'
+                data-settings='{"jet_parallax_layout_list":[],"background_background":"slideshow","background_slideshow_gallery":[{"id":26988,"url":"cover2copy.jpeg"}],"background_slideshow_loop":"yes","background_slideshow_slide_duration":5000,"background_slideshow_slide_transition":"fade","background_slideshow_transition_duration":500}'
               >
                 <div class="elementor-background-overlay"></div>
                 <div class="elementor-container elementor-column-gap-default">
@@ -5266,10 +5297,10 @@
                                       <div class="timeline-item__card-content">
                                         <div class="timeline-item__meta"></div>
                                         <h5 class="timeline-item__card-title">
-                                          LAMARAN (25 APRIL 2026)
+                                          LAMARAN
                                         </h5>
                                         <div class="timeline-item__card-desc">
-                                          Akhirnya, kami melangkah ke hari yang selama ini kami panjatkan dalam doa. Bukan karena waktu yang panjang, tetapi karena keyakinan yang kuat bahwa cinta yang diridhoi Allah SWT pasti akan menemukan jalannya.
+                                          25 April 2026 akhirnya kami melangkah ke hari yang selama ini kami panjatkan dalam doa. Bukan karena waktu yang panjang, tetapi karena keyakinan yang kuat bahwa cinta yang diridhoi Allah SWT pasti akan menemukan jalannya.
                                         </div>
                                       </div>
                                     </div>
@@ -5496,13 +5527,13 @@
                             />
                             <img
                               alt="Our Moments"
-                              src="cover.jpeg"
-                              data-image="cover.jpeg"
+                              src="cover - Copy.jpeg"
+                              data-image="cover - Copy.jpeg"
                               data-title="Gallery Image"
                             />
                             <img
                               alt="Our Moments"
-                              src="cover2.jpeg"
+                              src="cover2copy.jpeg"
                               data-image="cover2.jpeg"
                               data-title="Gallery Image"
                             />
@@ -5534,6 +5565,12 @@
                               alt="Our Moments"
                               src="akad1.jpeg"
                               data-image="akad1.jpeg"
+                              data-title="Gallery Image"
+                            />
+                             <img
+                              alt="Our Moments"
+                              src="galeri11.jpeg"
+                              data-image="galeri11.jpeg"
                               data-title="Gallery Image"
                             />
                           </div>
@@ -5592,7 +5629,7 @@
                                 <figure class="swiper-slide-inner">
                                   <img
                                     class="swiper-slide-image"
-                                    src="https://i.pinimg.com/1200x/7d/62/68/7d6268a2c742923305ea756c4988b3ab.jpg"
+                                    src="/weddinggift.jpeg"
                                     alt="sample-luxury-01"
                                   />
                                 </figure>
@@ -8013,6 +8050,27 @@
                                 enableScrolling();
                                 closeCover();
                                 myFunction();
+                                isInvitationOpened = true;
+                                // Ensure music starts from beginning on all browser modes
+                                var s = document.getElementById('song');
+                                if (s) {
+                                  s.currentTime = 0;
+                                  s.volume = 0;
+                                  var playPromise = s.play();
+                                  if (playPromise !== undefined) {
+                                    playPromise.then(function() {
+                                      var startVol = 0;
+                                      var target = 1;
+                                      var dur = 2000;
+                                      var t0 = Date.now();
+                                      (function fade() {
+                                        var elapsed = Date.now() - t0;
+                                        s.volume = Math.min(target, startVol + (target - startVol) * (elapsed / dur));
+                                        if (elapsed < dur) requestAnimationFrame(fade);
+                                      })();
+                                    }).catch(function() {});
+                                  }
+                                }
                               };
                             }
                             function myFunction() {
@@ -10077,7 +10135,25 @@
       // Also run when the hash changes dynamically
       window.addEventListener("hashchange", updateGuestName);
     </script>
-  </body>
+  
+    <!-- Perf: passive scroll listeners to prevent scroll jank -->
+    <script>
+      (function() {
+        // Override addEventListener to force passive on wheel/touch
+        var orig = EventTarget.prototype.addEventListener;
+        EventTarget.prototype.addEventListener = function(type, fn, opts) {
+          if (type === "wheel" || type === "touchstart" || type === "touchmove") {
+            if (typeof opts === "object") {
+              opts.passive = true;
+            } else {
+              opts = { passive: true, capture: !!opts };
+            }
+          }
+          orig.call(this, type, fn, opts);
+        };
+      })();
+    </script>
+</body>
 </html>
 <!-- Page optimized by LiteSpeed Cache @2026-06-09 06:36:19 -->
 
